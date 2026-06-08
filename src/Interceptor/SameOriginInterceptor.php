@@ -9,6 +9,7 @@ use Override;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\Csrf\Exception\ForbiddenException;
+use Ray\Csrf\Exception\LogicException;
 use Ray\Csrf\Http\AllowedOrigin;
 use Ray\Csrf\Http\RequestOriginInterface;
 
@@ -42,7 +43,7 @@ final readonly class SameOriginInterceptor implements MethodInterceptor
 
         $allowedCanonical = $this->canonicaliseOrigin($allowed);
         if ($allowedCanonical === null) {
-            throw new ForbiddenException('Same-origin policy: configured allowed origin is malformed.');
+            throw new LogicException('Same-origin policy: configured allowed origin is malformed.');
         }
 
         $fetchSite = $this->request->fetchSite();

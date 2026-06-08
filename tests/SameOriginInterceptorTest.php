@@ -7,6 +7,7 @@ namespace Ray\Csrf;
 use BEAR\Resource\Exception\BadRequestException;
 use PHPUnit\Framework\TestCase;
 use Ray\Csrf\Exception\ForbiddenException;
+use Ray\Csrf\Exception\LogicException;
 use Ray\Csrf\Fake\FakeInvocation;
 use Ray\Csrf\Fake\FakeRequestOrigin;
 use Ray\Csrf\Fake\FakeResource;
@@ -46,6 +47,17 @@ final class SameOriginInterceptorTest extends TestCase
         (new SameOriginInterceptor(
             new FakeRequestOrigin(fetchSite: 'cross-site'),
             new AllowedOrigin('https://example.com'),
+        ))->invoke(new FakeInvocation(new FakeResource(), 'onDelete'));
+    }
+
+    public function testMalformedAllowedOriginIsConfigurationError(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('configured allowed origin is malformed');
+
+        (new SameOriginInterceptor(
+            new FakeRequestOrigin(fetchSite: 'same-origin'),
+            new AllowedOrigin('https://example.com/path'),
         ))->invoke(new FakeInvocation(new FakeResource(), 'onDelete'));
     }
 

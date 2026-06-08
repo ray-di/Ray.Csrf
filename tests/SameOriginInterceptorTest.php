@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\Csrf;
 
 use BEAR\Resource\Exception\BadRequestException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ray\Csrf\Exception\ForbiddenException;
 use Ray\Csrf\Exception\LogicException;
@@ -18,57 +19,68 @@ final class SameOriginInterceptorTest extends TestCase
 {
     public function testSameOriginFetchSiteProceeds(): void
     {
-        $invocation = new FakeInvocation(new FakeResource(), 'onDelete');
-
-        $actual = (new SameOriginInterceptor(
-            new FakeRequestOrigin(fetchSite: 'same-origin'),
-            new AllowedOrigin('https://example.com'),
-        ))->invoke($invocation);
-
-        $this->assertSame('proceeded', $actual);
+        $this->assertSame('proceeded', $this->invoke(new FakeRequestOrigin(fetchSite: 'same-origin')));
     }
 
     public function testAllowedOriginNullShortCircuits(): void
     {
-        $invocation = new FakeInvocation(new FakeResource(), 'onDelete');
-
-        $actual = (new SameOriginInterceptor(
-            new FakeRequestOrigin(fetchSite: 'cross-site'),
-            new AllowedOrigin(null),
-        ))->invoke($invocation);
-
-        $this->assertSame('proceeded', $actual);
+        $this->assertSame('proceeded', $this->invoke(new FakeRequestOrigin(fetchSite: 'cross-site'), null));
     }
 
-    public function testCrossSiteForbidden(): void
+    public function testOriginHeaderMatchingProceeds(): void
+    {
+        $this->assertSame('proceeded', $this->invoke(new FakeRequestOrigin(origin: 'https://example.com')));
+    }
+
+    public function testOriginDefaultPortIsNormalisedAndProceeds(): void
+    {
+        $this->assertSame('proceeded', $this->invoke(new FakeRequestOrigin(origin: 'https://example.com:443')));
+    }
+
+    public function testRefererSameOriginProceeds(): void
+    {
+        $this->assertSame('proceeded', $this->invoke(new FakeRequestOrigin(referer: 'https://example.com/admin/edit?id=1')));
+    }
+
+    #[DataProvider('unsafeFetchSites')]
+    public function testUnsafeFetchSiteForbidden(string $fetchSite): void
     {
         $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('Sec-Fetch-Site: ' . $fetchSite);
 
-        (new SameOriginInterceptor(
-            new FakeRequestOrigin(fetchSite: 'cross-site'),
-            new AllowedOrigin('https://example.com'),
-        ))->invoke(new FakeInvocation(new FakeResource(), 'onDelete'));
+        $this->invoke(new FakeRequestOrigin(fetchSite: $fetchSite));
     }
 
-    public function testMalformedAllowedOriginIsConfigurationError(): void
+    public function testUnknownFetchSiteForbidden(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('configured allowed origin is malformed');
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('unknown Sec-Fetch-Site value');
 
-        (new SameOriginInterceptor(
-            new FakeRequestOrigin(fetchSite: 'same-origin'),
-            new AllowedOrigin('https://example.com/path'),
-        ))->invoke(new FakeInvocation(new FakeResource(), 'onDelete'));
+        $this->invoke(new FakeRequestOrigin(fetchSite: 'made-up'));
     }
 
-    public function testMalformedOriginBadRequest(): void
+    public function testCrossOriginOriginForbidden(): void
     {
-        $this->expectException(BadRequestException::class);
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('cross-origin Origin');
 
-        (new SameOriginInterceptor(
-            new FakeRequestOrigin(origin: 'https://evil.example/path'),
-            new AllowedOrigin('https://example.com'),
-        ))->invoke(new FakeInvocation(new FakeResource(), 'onDelete'));
+        $this->invoke(new FakeRequestOrigin(origin: 'https://evil.example'));
+    }
+
+    public function testCrossOriginNonDefaultPortForbidden(): void
+    {
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('cross-origin Origin');
+
+        $this->invoke(new FakeRequestOrigin(origin: 'https://example.com:8443'));
+    }
+
+    public function testCrossOriginRefererForbidden(): void
+    {
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('cross-origin Referer');
+
+        $this->invoke(new FakeRequestOrigin(referer: 'https://evil.example/page'));
     }
 
     public function testHeaderAbsentForbidden(): void
@@ -76,19 +88,60 @@ final class SameOriginInterceptorTest extends TestCase
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionMessage('no Sec-Fetch-Site / Origin / Referer');
 
-        (new SameOriginInterceptor(
-            new FakeRequestOrigin(),
-            new AllowedOrigin('https://example.com'),
-        ))->invoke(new FakeInvocation(new FakeResource(), 'onDelete'));
+        $this->invoke(new FakeRequestOrigin());
     }
 
-    public function testRefererSameOriginProceeds(): void
+    public function testMalformedAllowedOriginIsConfigurationError(): void
     {
-        $actual = (new SameOriginInterceptor(
-            new FakeRequestOrigin(referer: 'https://example.com/admin/edit?id=1'),
-            new AllowedOrigin('https://example.com'),
-        ))->invoke(new FakeInvocation(new FakeResource(), 'onDelete'));
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('configured allowed origin is malformed');
 
-        $this->assertSame('proceeded', $actual);
+        $this->invoke(new FakeRequestOrigin(fetchSite: 'same-origin'), 'https://example.com/path');
+    }
+
+    #[DataProvider('malformedOrigins')]
+    public function testMalformedOriginBadRequest(string $origin): void
+    {
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('malformed Origin header');
+
+        $this->invoke(new FakeRequestOrigin(origin: $origin));
+    }
+
+    public function testMalformedRefererBadRequest(): void
+    {
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('malformed Referer header');
+
+        $this->invoke(new FakeRequestOrigin(referer: 'http://'));
+    }
+
+    /** @return array<string, array{string}> */
+    public static function unsafeFetchSites(): array
+    {
+        return [
+            'cross-site' => ['cross-site'],
+            'same-site' => ['same-site'],
+            'none' => ['none'],
+        ];
+    }
+
+    /** @return array<string, array{string}> */
+    public static function malformedOrigins(): array
+    {
+        return [
+            'with path' => ['https://evil.example/path'],
+            'literal null' => ['null'],
+            'missing scheme' => ['example.com'],
+            'with userinfo' => ['https://user:pass@example.com'],
+        ];
+    }
+
+    private function invoke(FakeRequestOrigin $request, string|null $allowedOrigin = 'https://example.com'): mixed
+    {
+        return (new SameOriginInterceptor(
+            $request,
+            new AllowedOrigin($allowedOrigin),
+        ))->invoke(new FakeInvocation(new FakeResource(), 'onDelete'));
     }
 }

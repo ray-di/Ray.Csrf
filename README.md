@@ -55,6 +55,11 @@ final class Article extends ResourceObject
 `#[SameOrigin]` validates browser origin signals (`Sec-Fetch-Site`, `Origin`,
 `Referer`). If `allowedOrigin` is `null`, only this origin gate is skipped.
 
+When `Sec-Fetch-Site` is present (all modern browsers send it), the request is
+judged by that browser-computed signal alone and `allowedOrigin` is not
+compared. `allowedOrigin` is consulted only for the `Origin` / `Referer`
+fallback used by older or non-browser clients.
+
 `#[CsrfToken]` validates a synchroniser token and is not disabled by
 `allowedOrigin: null`. Tests and fake contexts should override
 `CsrfTokenInterface` when they do not drive real HTTP form submissions.
@@ -69,6 +74,9 @@ The submitted token is read in this order:
 
 This keeps the token out of Resource method arguments while still supporting
 BEAR.Resource requests, HTML forms, and JavaScript submissions.
+
+The header name `X-CSRF-Token` is fixed and is **not** affected by `tokenField`;
+only the query and `$_POST` sources use the configured `tokenField` name.
 
 ## Template example
 

@@ -26,7 +26,7 @@ final class CsrfModule extends AbstractModule
 {
     public function __construct(
         private readonly string|null $allowedOrigin = null,
-        private readonly string $tokenField = '_csrf_token',
+        private readonly string $tokenField = CsrfTokenField::DEFAULT_NAME,
     ) {
         parent::__construct();
     }

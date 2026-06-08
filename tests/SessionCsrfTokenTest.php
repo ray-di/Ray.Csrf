@@ -7,6 +7,7 @@ namespace Ray\Csrf;
 use PHPUnit\Framework\TestCase;
 
 use function session_id;
+use function session_start;
 use function session_status;
 
 use const PHP_SESSION_ACTIVE;
@@ -22,6 +23,7 @@ final class SessionCsrfTokenTest extends TestCase
         }
 
         session_id('ray-csrf-test');
+        session_start();
         $_SESSION = [];
     }
 

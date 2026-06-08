@@ -76,6 +76,18 @@ final class RequestTokenTest extends TestCase
         $this->assertSame('query-token', $actual);
     }
 
+    public function testCompositeRequestTokenFallsBackToPost(): void
+    {
+        $_POST['_csrf_token'] = 'post-token';
+        $resource = new FakeResource();
+        $resource->uri = new FakeUri();
+        $resource->uri->query = [];
+
+        $actual = $this->composite()->submitted(new FakeInvocation($resource, 'onPost'), new CsrfTokenField());
+
+        $this->assertSame('post-token', $actual);
+    }
+
     private function invocation(): FakeInvocation
     {
         return new FakeInvocation(new FakeResource(), 'onPost');

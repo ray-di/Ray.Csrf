@@ -12,7 +12,7 @@ use function is_string;
 /** @SuppressWarnings("PHPMD.Superglobals") Header adapter boundary. */
 final readonly class HeaderRequestToken implements RequestTokenInterface
 {
-    private const string HEADER_KEY = 'HTTP_X_CSRF_TOKEN';
+    private const HEADER_KEY = 'HTTP_X_CSRF_TOKEN';
 
     /** @param MethodInvocation<object> $invocation */
     #[Override]

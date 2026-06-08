@@ -21,9 +21,9 @@ use function strtolower;
 
 final readonly class SameOriginInterceptor implements MethodInterceptor
 {
-    private const array UNSAFE_FETCH_SITES = ['cross-site', 'same-site', 'none'];
-    private const array DEFAULT_PORTS = ['http' => 80, 'https' => 443];
-    private const array NON_ORIGIN_PARTS = ['user' => 0, 'pass' => 0, 'query' => 0, 'fragment' => 0];
+    private const UNSAFE_FETCH_SITES = ['cross-site', 'same-site', 'none'];
+    private const DEFAULT_PORTS = ['http' => 80, 'https' => 443];
+    private const NON_ORIGIN_PARTS = ['user' => 0, 'pass' => 0, 'query' => 0, 'fragment' => 0];
 
     public function __construct(
         private RequestOriginInterface $request,

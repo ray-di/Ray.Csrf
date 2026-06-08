@@ -10,6 +10,11 @@ use Ray\Csrf\Attribute\SameOrigin;
 
 final class FakeResource extends ResourceObject
 {
+    public function onGet(): static
+    {
+        return $this;
+    }
+
     #[CsrfToken]
     public function onPost(): static
     {

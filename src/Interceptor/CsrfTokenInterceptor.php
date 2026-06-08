@@ -10,9 +10,12 @@ use Ray\Aop\MethodInvocation;
 use Ray\Csrf\Attribute\CsrfToken;
 use Ray\Csrf\CsrfTokenInterface;
 use Ray\Csrf\Exception\InvalidCsrfTokenException;
+use Ray\Csrf\Exception\LogicException;
 use Ray\Csrf\Exception\MissingCsrfTokenException;
 use Ray\Csrf\Http\CsrfTokenField;
 use Ray\Csrf\Http\RequestTokenInterface;
+
+use function sprintf;
 
 final readonly class CsrfTokenInterceptor implements MethodInterceptor
 {
@@ -43,7 +46,16 @@ final readonly class CsrfTokenInterceptor implements MethodInterceptor
     /** @param MethodInvocation<object> $invocation */
     private function field(MethodInvocation $invocation): CsrfTokenField
     {
-        $attributes = $invocation->getMethod()->getAttributes(CsrfToken::class);
+        $method = $invocation->getMethod();
+        $attributes = $method->getAttributes(CsrfToken::class);
+        if ($attributes === []) {
+            throw new LogicException(sprintf(
+                'CsrfTokenInterceptor requires #[CsrfToken] on %s::%s().',
+                $method->getDeclaringClass()->getName(),
+                $method->getName(),
+            ));
+        }
+
         $attribute = $attributes[0]->newInstance();
 
         return $attribute->field === null

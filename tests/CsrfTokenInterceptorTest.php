@@ -6,6 +6,7 @@ namespace Ray\Csrf;
 
 use PHPUnit\Framework\TestCase;
 use Ray\Csrf\Exception\InvalidCsrfTokenException;
+use Ray\Csrf\Exception\LogicException;
 use Ray\Csrf\Exception\MissingCsrfTokenException;
 use Ray\Csrf\Fake\FakeCsrfToken;
 use Ray\Csrf\Fake\FakeInvocation;
@@ -62,6 +63,14 @@ final class CsrfTokenInterceptorTest extends TestCase
         $actual = $this->interceptor()->invoke($invocation);
 
         $this->assertSame('proceeded', $actual);
+    }
+
+    public function testMissingCsrfTokenAttributeIsConfigurationError(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('requires #[CsrfToken]');
+
+        $this->interceptor()->invoke(new FakeInvocation(new FakeResource(), 'onGet'));
     }
 
     private function interceptor(): CsrfTokenInterceptor

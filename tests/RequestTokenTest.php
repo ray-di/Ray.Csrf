@@ -13,6 +13,7 @@ use Ray\Csrf\Http\CsrfTokenField;
 use Ray\Csrf\Http\HeaderRequestToken;
 use Ray\Csrf\Http\PostRequestToken;
 use Ray\Csrf\Http\ResourceQueryRequestToken;
+use stdClass;
 
 final class RequestTokenTest extends TestCase
 {
@@ -40,6 +41,13 @@ final class RequestTokenTest extends TestCase
         $actual = (new ResourceQueryRequestToken())->submitted(new FakeInvocation($resource, 'onPost'), new CsrfTokenField());
 
         $this->assertSame('query-token', $actual);
+    }
+
+    public function testResourceQueryRequestTokenIgnoresNonResourceObject(): void
+    {
+        $actual = (new ResourceQueryRequestToken())->submitted(new FakeInvocation(new stdClass(), 'onPost'), new CsrfTokenField());
+
+        $this->assertNull($actual);
     }
 
     public function testPostRequestToken(): void

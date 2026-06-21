@@ -9,9 +9,9 @@ use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\Csrf\Attribute\CsrfToken;
 use Ray\Csrf\CsrfTokenInterface;
-use Ray\Csrf\Exception\InvalidCsrfTokenException;
+use Ray\Csrf\Exception\InvalidCsrfTokenForbiddenException;
 use Ray\Csrf\Exception\LogicException;
-use Ray\Csrf\Exception\MissingCsrfTokenException;
+use Ray\Csrf\Exception\MissingCsrfTokenForbiddenException;
 use Ray\Csrf\Http\CsrfTokenField;
 use Ray\Csrf\Http\RequestTokenInterface;
 
@@ -33,11 +33,11 @@ final readonly class CsrfTokenInterceptor implements MethodInterceptor
         $field = $this->field($invocation);
         $submitted = $this->requestToken->submitted($invocation, $field);
         if ($submitted === null) {
-            throw new MissingCsrfTokenException();
+            throw new MissingCsrfTokenForbiddenException();
         }
 
         if (! $this->csrf->verify($submitted)) {
-            throw new InvalidCsrfTokenException();
+            throw new InvalidCsrfTokenForbiddenException();
         }
 
         return $invocation->proceed();

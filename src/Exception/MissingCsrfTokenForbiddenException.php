@@ -6,10 +6,10 @@ namespace Ray\Csrf\Exception;
 
 use Throwable;
 
-final class InvalidCsrfTokenException extends ForbiddenException
+final class MissingCsrfTokenForbiddenException extends ForbiddenException
 {
     public function __construct(Throwable|null $previous = null)
     {
-        parent::__construct('CSRF token invalid.', $previous);
+        parent::__construct('CSRF token missing.', $previous);
     }
 }

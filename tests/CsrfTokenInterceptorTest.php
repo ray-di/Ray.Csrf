@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Ray\Csrf;
 
 use PHPUnit\Framework\TestCase;
-use Ray\Csrf\Exception\InvalidCsrfTokenException;
+use Ray\Csrf\Exception\InvalidCsrfTokenForbiddenException;
 use Ray\Csrf\Exception\LogicException;
-use Ray\Csrf\Exception\MissingCsrfTokenException;
+use Ray\Csrf\Exception\MissingCsrfTokenForbiddenException;
 use Ray\Csrf\Fake\FakeCsrfToken;
 use Ray\Csrf\Fake\FakeInvocation;
 use Ray\Csrf\Fake\FakeResource;
@@ -40,7 +40,7 @@ final class CsrfTokenInterceptorTest extends TestCase
 
     public function testMissingTokenForbidden(): void
     {
-        $this->expectException(MissingCsrfTokenException::class);
+        $this->expectException(MissingCsrfTokenForbiddenException::class);
 
         $this->interceptor()->invoke(new FakeInvocation(new FakeResource(), 'onPost'));
     }
@@ -48,7 +48,7 @@ final class CsrfTokenInterceptorTest extends TestCase
     public function testInvalidTokenForbidden(): void
     {
         $_SERVER['HTTP_X_CSRF_TOKEN'] = 'invalid-token';
-        $this->expectException(InvalidCsrfTokenException::class);
+        $this->expectException(InvalidCsrfTokenForbiddenException::class);
 
         $this->interceptor()->invoke(new FakeInvocation(new FakeResource(), 'onPost'));
     }

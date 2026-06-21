@@ -7,7 +7,7 @@ namespace Ray\Csrf;
 use BEAR\Resource\Exception\BadRequestException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Ray\Csrf\Exception\ForbiddenException;
+use Ray\Csrf\Exception\CrossOriginForbiddenException;
 use Ray\Csrf\Exception\LogicException;
 use Ray\Csrf\Fake\FakeInvocation;
 use Ray\Csrf\Fake\FakeRequestOrigin;
@@ -45,7 +45,7 @@ final class SameOriginInterceptorTest extends TestCase
     #[DataProvider('unsafeFetchSites')]
     public function testUnsafeFetchSiteForbidden(string $fetchSite): void
     {
-        $this->expectException(ForbiddenException::class);
+        $this->expectException(CrossOriginForbiddenException::class);
         $this->expectExceptionMessage('Sec-Fetch-Site: ' . $fetchSite);
 
         $this->invoke(new FakeRequestOrigin(fetchSite: $fetchSite));
@@ -53,7 +53,7 @@ final class SameOriginInterceptorTest extends TestCase
 
     public function testUnknownFetchSiteForbidden(): void
     {
-        $this->expectException(ForbiddenException::class);
+        $this->expectException(CrossOriginForbiddenException::class);
         $this->expectExceptionMessage('unknown Sec-Fetch-Site value');
 
         $this->invoke(new FakeRequestOrigin(fetchSite: 'made-up'));
@@ -61,7 +61,7 @@ final class SameOriginInterceptorTest extends TestCase
 
     public function testCrossOriginOriginForbidden(): void
     {
-        $this->expectException(ForbiddenException::class);
+        $this->expectException(CrossOriginForbiddenException::class);
         $this->expectExceptionMessage('cross-origin Origin');
 
         $this->invoke(new FakeRequestOrigin(origin: 'https://evil.example'));
@@ -69,7 +69,7 @@ final class SameOriginInterceptorTest extends TestCase
 
     public function testCrossOriginNonDefaultPortForbidden(): void
     {
-        $this->expectException(ForbiddenException::class);
+        $this->expectException(CrossOriginForbiddenException::class);
         $this->expectExceptionMessage('cross-origin Origin');
 
         $this->invoke(new FakeRequestOrigin(origin: 'https://example.com:8443'));
@@ -77,7 +77,7 @@ final class SameOriginInterceptorTest extends TestCase
 
     public function testCrossOriginRefererForbidden(): void
     {
-        $this->expectException(ForbiddenException::class);
+        $this->expectException(CrossOriginForbiddenException::class);
         $this->expectExceptionMessage('cross-origin Referer');
 
         $this->invoke(new FakeRequestOrigin(referer: 'https://evil.example/page'));
@@ -85,7 +85,7 @@ final class SameOriginInterceptorTest extends TestCase
 
     public function testHeaderAbsentForbidden(): void
     {
-        $this->expectException(ForbiddenException::class);
+        $this->expectException(CrossOriginForbiddenException::class);
         $this->expectExceptionMessage('no Sec-Fetch-Site / Origin / Referer');
 
         $this->invoke(new FakeRequestOrigin());

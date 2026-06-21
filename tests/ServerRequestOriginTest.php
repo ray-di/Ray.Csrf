@@ -14,6 +14,11 @@ final class ServerRequestOriginTest extends TestCase
         unset($_SERVER['HTTP_SEC_FETCH_SITE'], $_SERVER['HTTP_ORIGIN'], $_SERVER['HTTP_REFERER']);
     }
 
+    protected function tearDown(): void
+    {
+        unset($_SERVER['HTTP_SEC_FETCH_SITE'], $_SERVER['HTTP_ORIGIN'], $_SERVER['HTTP_REFERER']);
+    }
+
     public function testReadsHeaders(): void
     {
         $_SERVER['HTTP_SEC_FETCH_SITE'] = 'same-origin';

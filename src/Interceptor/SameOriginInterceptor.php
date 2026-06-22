@@ -8,7 +8,7 @@ use BEAR\Resource\Exception\BadRequestException;
 use Override;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
-use Ray\Csrf\Exception\ForbiddenException;
+use Ray\Csrf\Exception\CrossOriginForbiddenException;
 use Ray\Csrf\Exception\LogicException;
 use Ray\Csrf\Http\AllowedOrigin;
 use Ray\Csrf\Http\RequestOriginInterface;
@@ -62,10 +62,10 @@ final readonly class SameOriginInterceptor implements MethodInterceptor
         }
 
         if (in_array($fetchSite, self::UNSAFE_FETCH_SITES, true)) {
-            throw new ForbiddenException(sprintf('Same-origin policy: Sec-Fetch-Site: %s.', $fetchSite));
+            throw new CrossOriginForbiddenException(sprintf('Same-origin policy: Sec-Fetch-Site: %s.', $fetchSite));
         }
 
-        throw new ForbiddenException(sprintf('Same-origin policy: unknown Sec-Fetch-Site value: %s.', $fetchSite));
+        throw new CrossOriginForbiddenException(sprintf('Same-origin policy: unknown Sec-Fetch-Site value: %s.', $fetchSite));
     }
 
     /** @param MethodInvocation<object> $invocation */
@@ -82,7 +82,7 @@ final readonly class SameOriginInterceptor implements MethodInterceptor
                 return $invocation->proceed();
             }
 
-            throw new ForbiddenException(sprintf('Same-origin policy: cross-origin Origin: %s.', $origin));
+            throw new CrossOriginForbiddenException(sprintf('Same-origin policy: cross-origin Origin: %s.', $origin));
         }
 
         $referer = $this->request->referer();
@@ -96,10 +96,10 @@ final readonly class SameOriginInterceptor implements MethodInterceptor
                 return $invocation->proceed();
             }
 
-            throw new ForbiddenException(sprintf('Same-origin policy: cross-origin Referer: %s.', $referer));
+            throw new CrossOriginForbiddenException(sprintf('Same-origin policy: cross-origin Referer: %s.', $referer));
         }
 
-        throw new ForbiddenException('Same-origin policy: no Sec-Fetch-Site / Origin / Referer header.');
+        throw new CrossOriginForbiddenException('Same-origin policy: no Sec-Fetch-Site / Origin / Referer header.');
     }
 
     private function canonicaliseOrigin(string $value): string|null

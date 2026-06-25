@@ -78,6 +78,12 @@ BEAR.Resource requests, HTML forms, and JavaScript submissions.
 The header name `X-CSRF-Token` is fixed and is **not** affected by `tokenField`;
 only the query and `$_POST` sources use the configured `tokenField` name.
 
+Avoid the query-string source for browser-facing requests: a token placed in the
+URL can leak through server access logs, the `Referer` header, browser history,
+and shared or bookmarked links. Prefer the `X-CSRF-Token` header or the `$_POST`
+body for browser submissions, and reserve `uri->query` for server-side
+BEAR.Resource requests whose URI is never exposed to a browser.
+
 ## Template example
 
 Issue a token through `CsrfTokenInterface` in your renderer or template helper
@@ -88,3 +94,19 @@ and render it as a hidden field:
 ```
 
 The Resource does not need to know that this field exists.
+
+## Token lifecycle
+
+The synchroniser token is stored per session and stays stable across requests,
+so it does not need to be reissued for every form.
+
+Rotate it whenever the authentication state changes, to mitigate login CSRF and
+session fixation. On login and logout, regenerate the session id and clear the
+token so the next `issue()` mints a fresh one bound to the new session:
+
+```php
+// $csrf is an injected CsrfTokenInterface
+session_regenerate_id(true);
+$csrf->clear();   // drop the old token
+$csrf->issue();   // mint a fresh token for the new session
+```

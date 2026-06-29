@@ -1,4 +1,4 @@
-# ray/csrf
+# Ray.Csrf
 
 CSRF protection for Ray.Di / BEAR.Resource applications.
 
